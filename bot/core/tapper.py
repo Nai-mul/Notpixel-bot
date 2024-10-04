@@ -94,7 +94,7 @@ class Tapper:
                     logger.warning(f"<light-yellow>{self.session_name}</light-yellow> | FloodWait {fl}")
                     logger.info(f"<light-yellow>{self.session_name}</light-yellow> | Sleep {fls}s")
 
-                    await asyncio.sleep(fls + 3)
+                    await asyncio.sleep(fls + 5)
 
             web_view = await self.tg_client.invoke(RequestAppWebView(
                 peer=peer,
@@ -120,7 +120,7 @@ class Tapper:
         except Exception as error:
             logger.error(f"<light-yellow>{self.session_name}</light-yellow> | Unknown error during Authorization: "
                          f"{error}")
-            await asyncio.sleep(delay=3)
+            await asyncio.sleep(delay=5)
 
     async def check_proxy(self, http_client: aiohttp.ClientSession, proxy: Proxy):
         try:
@@ -229,13 +229,13 @@ class Tapper:
         res = session.get("https://notpx.app/api/v1/mining/boost/check/paintReward", headers=headers, verify=False)
         if res.status_code == 200:
             logger.success(f"{self.session_name} | <green>Upgrade paint reward successfully!</green>")
-        await asyncio.sleep(random.uniform(2, 4))
+        await asyncio.sleep(random.uniform(5, 10))
 
     async def auto_upgrade_recharge_speed(self, session: requests.Session):
         res = session.get("https://notpx.app/api/v1/mining/boost/check/reChargeSpeed", headers=headers, verify=False)
         if res.status_code == 200:
             logger.success(f"{self.session_name} | <green>Upgrade recharging speed successfully!</green>")
-        await asyncio.sleep(random.uniform(2, 4))
+        await asyncio.sleep(random.uniform(5, 10))
 
     async def auto_upgrade_energy_limit(self, session: requests.Session):
         res = session.get("https://notpx.app/api/v1/mining/boost/check/energyLimit", headers=headers, verify=False)
@@ -313,14 +313,14 @@ class Tapper:
                                     self.repaintV2(session, total_chance, i, data)
                                 else:
                                     self.repaint(session, total_chance)
-                                sleep_ = random.uniform(1, 2)
+                                sleep_ = random.uniform(5, 10)
                                 logger.info(f"{self.session_name} | Sleep <cyan>{sleep_}</cyan> before continue...")
                                 await asyncio.sleep(sleep_)
 
                         r = random.uniform(2, 4)
                         if float(self.fromstart) >= self.maxtime / r:
                             self.claimpx(session)
-                            await asyncio.sleep(random.uniform(2, 5))
+                            await asyncio.sleep(random.uniform(5, 10))
                         if settings.AUTO_TASK:
                             res = session.get("https://notpx.app/api/v1/mining/task/check/x?name=notpixel",
                                               headers=headers, verify=False)
@@ -348,7 +348,7 @@ class Tapper:
                     else:
                         logger.warning(f"{self.session_name} | <yellow>Failed to get user data!</yellow>")
                 if self.multi_thread:
-                    sleep_ = randint(500, 1000)
+                    sleep_ = randint(3200, 7200)
                     logger.info(f"{self.session_name} | Sleep {sleep_}s...")
                     await asyncio.sleep(sleep_)
                 else:
