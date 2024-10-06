@@ -3,7 +3,8 @@ import random
 import sys
 from itertools import cycle
 from urllib.parse import unquote
-
+import cv2 
+import numpy as np 
 import aiohttp
 import requests
 from aiocfscrape import CloudflareScraper
@@ -27,13 +28,11 @@ import urllib3
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-
 def calc_id(x: int, y: int, x1: int, y1: int):
     px_id = randint(min(y, y1), max(y1, y)) * 1000
     px_id += randint(min(x, x1), max(x1, x)) + 1
     # print(px_id)
     return px_id
-
 
 class Tapper:
     def __init__(self, tg_client: Client, multi_thread: bool):
@@ -149,6 +148,22 @@ class Tapper:
         else:
             print(response.json())
             return None
+        
+    def analyze_canvas(self, image: np.ndarray) -> list[tuple[int, int]]:
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        _, thresh = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)
+        contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        coordinates = []
+        for cnt in contours:
+           x, y, w, h = cv2.boundingRect(cnt)
+           coordinates.append((x, y))
+        return coordinates
+
+    def create_color_patch(self, color):
+        # Create a 100x100 pixel image filled with the given color
+        patch = np.zeros((100, 100, 3), dtype=np.uint8)
+        patch[:] = color
+        return patch
 
     def generate_random_color(self):
         r = randint(0, 255)
@@ -172,32 +187,35 @@ class Tapper:
             return [color, px_id]
 
     def repaint(self, session: requests.Session, chance_left):
-        #  print("starting to paint")
         if settings.X3POINTS:
             data = self.get_cor(session)
-            payload = {
-                "newColor": data[0],
-                "pixelId": data[1]
-            }
+            color = tuple(int(data[0][i:i+2], 16) for i in (1, 3, 5))  # Convert hex to RGB tuple
+            color = (color[2], color[1], color[0])  # Convert RGB to BGR for OpenCV
         else:
-            data = [str(self.generate_random_color()), int(self.generate_random_pos())]
-            payload = {
-                "newColor": data[0],
-                "pixelId": data[1]
-            }
+            color = self.generate_random_color()
+
+        # Generate a color patch for visualization
+        patch = self.create_color_patch(color)
+
+        # Show the patch using OpenCV (for visualization purposes)
+        cv2.imshow("Repainting Color", patch)
+        cv2.waitKey(500)  # Display the image for 500 ms
+        cv2.destroyAllWindows()
+
+        # Proceed with the existing repaint logic
+        data = [str('#%02x%02x%02x' % (color[2], color[1], color[0])), int(self.generate_random_pos())]
+        payload = {
+            "newColor": data[0],
+            "pixelId": data[1]
+        }
+
         response = session.post("https://notpx.app/api/v1/repaint/start", headers=headers, json=payload, verify=False)
         if response.status_code == 200:
-            if settings.X3POINTS:
-                logger.success(
-                    f"{self.session_name} | <green>Painted <cyan>{data[1]}</cyan> successfully new color: <cyan>{data[0]}</cyan> | Earned <light-blue>{int(response.json()['balance']) - self.balance}</light-blue> | Balace: <light-blue>{response.json()['balance']}</light-blue> | Repaint left: <yellow>{chance_left}</yellow></green>")
-                self.balance = int(response.json()['balance'])
-            else:
-                logger.success(
-                    f"{self.session_name} | <green>Painted <cyan>{data[1]}</cyan> successfully new color: <cyan>{data[0]}</cyan> | Earned <light-blue>{int(response.json()['balance']) - self.balance}</light-blue> | Balace: <light-blue>{response.json()['balance']}</light-blue> | Repaint left: <yellow>{chance_left}</yellow></green>")
-                self.balance = int(response.json()['balance'])
+            logger.success(
+                f"{self.session_name} | <green>Painted <cyan>{data[1]}</cyan> successfully new color: <cyan>{data[0]}</cyan> | Earned <light-blue>{int(response.json()['balance']) - self.balance}</light-blue> | Balance: <light-blue>{response.json()['balance']}</light-blue> | Repaint left: <yellow>{chance_left}</yellow></green>")
+            self.balance = int(response.json()['balance'])
         else:
-            print(response.text)
-            logger.warning(f"{self.session_name} | Faled to repaint: {response.status_code}")
+            logger.warning(f"{self.session_name} | Failed to repaint: {response.status_code}")
 
     def repaintV2(self, session: requests.Session, chance_left, i, data):
         if i % 2 == 0:
