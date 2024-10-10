@@ -93,7 +93,7 @@ class Tapper:
                     logger.warning(f"<light-yellow>{self.session_name}</light-yellow> | FloodWait {fl}")
                     logger.info(f"<light-yellow>{self.session_name}</light-yellow> | Sleep {fls}s")
 
-                    await asyncio.sleep(fls + 5)
+                    await asyncio.sleep(fls + random.uniform(10, 30))
 
             web_view = await self.tg_client.invoke(RequestAppWebView(
                 peer=peer,
