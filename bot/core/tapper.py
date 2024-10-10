@@ -3,7 +3,6 @@ import random
 import sys
 from itertools import cycle
 from urllib.parse import unquote
-import numpy as np 
 import aiohttp
 import requests
 from aiocfscrape import CloudflareScraper
