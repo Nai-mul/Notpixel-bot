@@ -3,7 +3,6 @@ import random
 import sys
 from itertools import cycle
 from urllib.parse import unquote
-import cv2 
 import numpy as np 
 import aiohttp
 import requests
