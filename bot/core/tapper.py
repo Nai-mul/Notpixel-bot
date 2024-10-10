@@ -146,23 +146,7 @@ class Tapper:
             return response.json()
         else:
             print(response.json())
-            return None
-        
-    def analyze_canvas(self, image: np.ndarray) -> list[tuple[int, int]]:
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        _, thresh = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)
-        contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        coordinates = []
-        for cnt in contours:
-           x, y, w, h = cv2.boundingRect(cnt)
-           coordinates.append((x, y))
-        return coordinates
-
-    def create_color_patch(self, color):
-        # Create a 100x100 pixel image filled with the given color
-        patch = np.zeros((100, 100, 3), dtype=np.uint8)
-        patch[:] = color
-        return patch
+            return None  
 
     def generate_random_color(self):
         r = randint(0, 255)
